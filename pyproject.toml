@@ -1,0 +1,18 @@
+[project]
+name = "hardline"
+version = "0.1.0"
+description = "Experimental Matrix-to-Codex agent controller with scoped MCP tools"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = ["fastmcp>=3.2,<4", "httpx>=0.28", "websockets>=15", "matrix-mcp==0.8.1"]
+[project.scripts]
+hardline = "hardline.cli:main"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/examples", "/docs/services.md", "/README.md", "/LICENSE", "/SECURITY.md", "/pyproject.toml", "/uv.lock"]

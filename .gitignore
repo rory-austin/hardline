@@ -1,0 +1,25 @@
+.runtime/
+work/
+__pycache__/
+
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Personal installation state and historical operational evidence
+agents.json
+launchd/*.plist
+docs/controller-test-results.json
+docs/implementation-test-results.json
+docs/protocol-evidence.md
+docs/ketesa-admin.md
+docs/superpowers/
+.env
+.env.*
+!.env.example
+*.log
+*.sqlite
+*.sqlite-*
+dist/
+.DS_Store
+!examples/agents.json

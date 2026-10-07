@@ -1,0 +1,9 @@
+{
+  "manager": {
+    "cwd": "/absolute/path/to/agents/manager",
+    "thread_id": "REPLACE_WITH_PERSISTENT_CODEX_THREAD_ID",
+    "matrix_user": "@manager:example.org",
+    "status": "active",
+    "mention_aliases": ["manager"]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "homeserver": "https://matrix.example.org",
+  "rooms": ["!coordination:example.org"],
+  "senders": ["@owner:example.org", "@manager:example.org", "@helper:example.org"],
+  "management_agents": ["manager"],
+  "allowed_roots": ["/absolute/path/to/agents"],
+  "provisioning": {"mode": "supplied"},
+  "agent_rooms": {},
+  "direct_rooms": {},
+  "agent_write_paths": {}
+}
