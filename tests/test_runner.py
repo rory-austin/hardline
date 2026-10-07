@@ -43,8 +43,8 @@ def test_approval_notice_survives_restart_without_repeat(tmp_path):
     from hardline.runner import notify_approval
 
     q = Queue(tmp_path / "q")
-    q.capture([("$followup", "neo", "!room", "$root")], "cursor")
-    q.mark("$followup", "delivered", "turn", owner="neo")
+    q.capture([("$followup", "manager", "!room", "$root")], "cursor")
+    q.mark("$followup", "delivered", "turn", owner="manager")
 
     class Matrix:
         def __init__(self):
@@ -61,8 +61,8 @@ def test_approval_notice_survives_restart_without_repeat(tmp_path):
     }
 
     async def run():
-        assert await notify_approval(q, mx, "neo", thread)
-        assert await notify_approval(Queue(tmp_path / "q"), mx, "neo", thread)
+        assert await notify_approval(q, mx, "manager", thread)
+        assert await notify_approval(Queue(tmp_path / "q"), mx, "manager", thread)
         assert len(mx.calls) == 1
         assert mx.calls[0][2]["m.relates_to"]["event_id"] == "$root"
 
@@ -75,13 +75,13 @@ def test_private_direct_room_routes_only_owner_without_mention(tmp_path):
 
     q = Queue(tmp_path / "q")
     registry = {
-        "tim": {"status": "active", "matrix_user": "@tim:x"},
-        "bob": {"status": "active", "matrix_user": "@bob:x"},
+        "assistant": {"status": "active", "matrix_user": "@assistant:x"},
+        "helper": {"status": "active", "matrix_user": "@helper:x"},
     }
     cfg = {
         "rooms": ["!shared"],
-        "agent_rooms": {"tim": ["!dm"]},
-        "direct_rooms": {"!dm": "tim"},
+        "agent_rooms": {"assistant": ["!dm"]},
+        "direct_rooms": {"!dm": "assistant"},
         "senders": ["@owner:x"],
     }
     event = {
@@ -92,17 +92,17 @@ def test_private_direct_room_routes_only_owner_without_mention(tmp_path):
     }
     sync = {"rooms": {"join": {"!dm": {"timeline": {"events": [event]}}}}}
     assert capture_batch(q, sync, registry, cfg) == [
-        ("$request", "tim", "!dm", "$request")
+        ("$request", "assistant", "!dm", "$request")
     ]
-    event["content"]["body"] = "@bob please test access"
+    event["content"]["body"] = "@helper please test access"
     assert capture_batch(q, sync, registry, cfg) == [
-        ("$request", "tim", "!dm", "$request")
+        ("$request", "assistant", "!dm", "$request")
     ]
 
 
 def test_room_grants_are_agent_specific():
     from hardline.runtime import allowed_rooms
 
-    cfg = {"rooms": ["!shared"], "agent_rooms": {"tim": ["!dm"]}}
-    assert allowed_rooms("tim", cfg) == {"!shared", "!dm"}
-    assert allowed_rooms("bob", cfg) == {"!shared"}
+    cfg = {"rooms": ["!shared"], "agent_rooms": {"assistant": ["!dm"]}}
+    assert allowed_rooms("assistant", cfg) == {"!shared", "!dm"}
+    assert allowed_rooms("helper", cfg) == {"!shared"}

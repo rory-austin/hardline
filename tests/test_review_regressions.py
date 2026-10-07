@@ -8,10 +8,10 @@ from hardline.runner import capture_batch, delivered_ref
 def test_rejects_management_identity(tmp_path):
     (tmp_path / ".codex").mkdir()
     (tmp_path / ".codex/config.toml").write_text(
-        '[mcp_servers.hardline]\ncommand="bad"\nargs=["mcp","--agent","neo"]\n'
+        '[mcp_servers.hardline]\ncommand="bad"\nargs=["mcp","--agent","manager"]\n'
     )
     with pytest.raises(ValueError, match="launch profile"):
-        install_mcp_config("bob", tmp_path)
+        install_mcp_config("helper", tmp_path)
 
 
 def test_same_batch_thread_assignment(tmp_path):
@@ -28,7 +28,7 @@ def test_same_batch_thread_assignment(tmp_path):
             "content": content,
         }
 
-    registry = {"bob": {"status": "active", "matrix_user": "@bob:x"}}
+    registry = {"helper": {"status": "active", "matrix_user": "@helper:x"}}
     cfg = {"rooms": ["!r"], "senders": ["@human:x"]}
     sync = {
         "rooms": {
@@ -36,7 +36,7 @@ def test_same_batch_thread_assignment(tmp_path):
                 "!r": {
                     "timeline": {
                         "events": [
-                            event("$one", "@bob:x work"),
+                            event("$one", "@helper:x work"),
                             event("$two", "more work", "$one"),
                         ]
                     }
@@ -49,7 +49,7 @@ def test_same_batch_thread_assignment(tmp_path):
     q.capture(result, "cursor")
     # Agent first mentioned inside somebody else's existing thread.
     sync["rooms"]["join"]["!r"]["timeline"]["events"] = [
-        event("$three", "@bob:x help", "$external")
+        event("$three", "@helper:x help", "$external")
     ]
     q.capture(capture_batch(q, sync, registry, cfg), "cursor2")
     sync["rooms"]["join"]["!r"]["timeline"]["events"] = [
@@ -96,14 +96,14 @@ def test_registration_failure_and_recovery(tmp_path, monkeypatch):
     state = tmp_path / "state"
     (state / "credentials").mkdir(parents=True)
     (state / "credentials/helper.json").write_text("{}")
-    registry = {"neo": {}}
+    registry = {"manager": {}}
     monkeypatch.setattr(mcp, "STATE", state)
     monkeypatch.setattr(locking, "STATE", state)
     monkeypatch.setattr(mcp, "agents", lambda: registry)
     monkeypatch.setattr(
         mcp,
         "settings",
-        lambda: {"allowed_roots": [str(tmp_path)], "management_agents": ["neo"]},
+        lambda: {"allowed_roots": [str(tmp_path)], "management_agents": ["manager"]},
     )
     monkeypatch.setattr(
         mcp,
@@ -137,7 +137,7 @@ def test_registration_failure_and_recovery(tmp_path, monkeypatch):
             return {"thread": {"cwd": str(folder)}}
 
     monkeypatch.setattr(mcp, "Codex", FakeCodex)
-    server = mcp.server("neo")
+    server = mcp.server("manager")
 
     async def run():
         async with Client(server) as c:
@@ -164,33 +164,33 @@ def test_rejects_other_mcp_launchers_and_sandbox_override(tmp_path):
     (tmp_path / ".codex").mkdir()
     path = tmp_path / ".codex/config.toml"
     path.write_text(
-        '[mcp_servers.other]\ncommand="hardline"\nargs=["mcp","--agent","neo"]\n'
+        '[mcp_servers.other]\ncommand="hardline"\nargs=["mcp","--agent","manager"]\n'
     )
     with pytest.raises(ValueError, match="non-baseline"):
-        install_mcp_config("bob", tmp_path)
+        install_mcp_config("helper", tmp_path)
     path.write_text('sandbox_mode="danger-full-access"\n')
     with pytest.raises(ValueError, match="non-controller"):
-        install_mcp_config("bob", tmp_path)
+        install_mcp_config("helper", tmp_path)
 
 
 def test_initiator_receives_unmentioned_reply(tmp_path):
     q = Queue(tmp_path / "q.sqlite")
     registry = {
-        "bob": {"status": "active", "matrix_user": "@bob:x"},
-        "neo": {"status": "active", "matrix_user": "@neo:x"},
+        "helper": {"status": "active", "matrix_user": "@helper:x"},
+        "manager": {"status": "active", "matrix_user": "@manager:x"},
     }
-    cfg = {"rooms": ["!r"], "senders": ["@bob:x", "@neo:x"]}
+    cfg = {"rooms": ["!r"], "senders": ["@helper:x", "@manager:x"]}
     events = [
         {
             "event_id": "$root",
             "type": "m.room.message",
-            "sender": "@bob:x",
-            "content": {"msgtype": "m.text", "body": "@neo:x do work"},
+            "sender": "@helper:x",
+            "content": {"msgtype": "m.text", "body": "@manager:x do work"},
         },
         {
             "event_id": "$reply",
             "type": "m.room.message",
-            "sender": "@neo:x",
+            "sender": "@manager:x",
             "content": {
                 "msgtype": "m.text",
                 "body": "Work complete",
@@ -200,4 +200,4 @@ def test_initiator_receives_unmentioned_reply(tmp_path):
     ]
     sync = {"rooms": {"join": {"!r": {"timeline": {"events": events}}}}}
     q.capture(capture_batch(q, sync, registry, cfg), "cursor")
-    assert set(q.pending()) == {("$root", "neo", "!r"), ("$reply", "bob", "!r")}
+    assert set(q.pending()) == {("$root", "manager", "!r"), ("$reply", "helper", "!r")}

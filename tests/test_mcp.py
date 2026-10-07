@@ -4,8 +4,8 @@ from hardline import mcp
 
 
 def test_agent_roles(monkeypatch):
-    monkeypatch.setattr(mcp, "settings", lambda: {"management_agents": ["neo"]})
-    monkeypatch.setattr(mcp, "agents", lambda: {"neo": {}, "bob": {}})
+    monkeypatch.setattr(mcp, "settings", lambda: {"management_agents": ["manager"]})
+    monkeypatch.setattr(mcp, "agents", lambda: {"manager": {}, "helper": {}})
     monkeypatch.setattr(
         mcp,
         "credential",
@@ -15,10 +15,10 @@ def test_agent_roles(monkeypatch):
             "access_token": "fixture",
         },
     )
-    for slug in ["neo", "bob"]:
+    for slug in ["manager", "helper"]:
         s = mcp.server(slug)
         names = {x.name for x in asyncio.run(s.list_tools())}
-        assert ("register_agent" in names) == (slug == "neo")
+        assert ("register_agent" in names) == (slug == "manager")
         assert "matrix_send_message" in names
         assert "matrix_redact_event" not in names
         assert "matrix_invite_user" not in names
@@ -33,14 +33,14 @@ def test_supplied_mode_waits_for_credentials(tmp_path, monkeypatch):
     folder.mkdir(parents=True)
     (folder / "AGENTS.md").write_text("Helper")
     (folder / "EMPLOYEE.md").write_text("Charter")
-    registry = {"neo": {}}
+    registry = {"manager": {}}
     monkeypatch.setattr(mcp, "agents", lambda: registry)
     monkeypatch.setattr(
         mcp,
         "credential",
         lambda slug: {
             "homeserver": "https://example.org",
-            "user_id": "@neo:example.org",
+            "user_id": "@manager:example.org",
             "access_token": "fixture",
         },
     )
@@ -49,7 +49,7 @@ def test_supplied_mode_waits_for_credentials(tmp_path, monkeypatch):
         "settings",
         lambda: {
             "allowed_roots": [str(tmp_path / "agents")],
-            "management_agents": ["neo"],
+            "management_agents": ["manager"],
         },
     )
     monkeypatch.setattr(
@@ -59,7 +59,7 @@ def test_supplied_mode_waits_for_credentials(tmp_path, monkeypatch):
     (tmp_path / "state").mkdir()
     monkeypatch.setattr(locking, "STATE", tmp_path / "state")
     monkeypatch.setattr(mcp, "private_write", lambda p, d: registry.update(d))
-    server = mcp.server("neo")
+    server = mcp.server("manager")
 
     async def run():
         async with Client(server) as c:
@@ -80,9 +80,9 @@ def test_supplied_mode_waits_for_credentials(tmp_path, monkeypatch):
 def test_manager_policy_matches_existing_lifecycle_grant(monkeypatch):
     from hardline import runtime
 
-    monkeypatch.setattr(runtime, "settings", lambda: {"management_agents": ["neo"]})
-    neo = runtime.worker_config("neo")["mcp_servers.hardline"]["tools"]
-    bob = runtime.worker_config("bob")["mcp_servers.hardline"]["tools"]
-    assert neo["register_agent"]["approval_mode"] == "approve"
-    assert neo["list_agents"]["approval_mode"] == "approve"
-    assert "register_agent" not in bob
+    monkeypatch.setattr(runtime, "settings", lambda: {"management_agents": ["manager"]})
+    manager = runtime.worker_config("manager")["mcp_servers.hardline"]["tools"]
+    helper = runtime.worker_config("helper")["mcp_servers.hardline"]["tools"]
+    assert manager["register_agent"]["approval_mode"] == "approve"
+    assert manager["list_agents"]["approval_mode"] == "approve"
+    assert "register_agent" not in helper

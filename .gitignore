@@ -6,13 +6,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Personal installation state and historical operational evidence
+# Local installation state and operational notes
 agents.json
 launchd/*.plist
-docs/controller-test-results.json
-docs/implementation-test-results.json
-docs/protocol-evidence.md
-docs/ketesa-admin.md
+docs/*-test-results.json
+docs/*-evidence.md
+docs/*-admin.md
 docs/superpowers/
 .env
 .env.*
