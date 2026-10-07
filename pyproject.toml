@@ -15,4 +15,4 @@ build-backend = "hatchling.build"
 dev = ["pytest>=8"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/examples", "/docs/services.md", "/README.md", "/LICENSE", "/SECURITY.md", "/pyproject.toml", "/uv.lock"]
+include = ["/src", "/tests", "/examples", "/docs/services.md", "/docs/remote-access.md", "/README.md", "/LICENSE", "/SECURITY.md", "/pyproject.toml", "/uv.lock"]
